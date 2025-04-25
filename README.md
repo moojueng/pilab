@@ -61,9 +61,7 @@ Nav2 Goal 검색 클릭 후 이동
 
 ⚠️ 문제 해결 핀
 
-문제
-
-해결
+문제해결
 
 RViz: map transform error
 
