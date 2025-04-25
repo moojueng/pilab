@@ -1,0 +1,43 @@
+📄 README.md 구성 요약
+전체 흐름:
+
+필수 패키지 설치
+
+bashrc 설정
+
+Gazebo 시뮬레이터 실행
+
+Cartographer SLAM 실행
+
+map 저장
+
+Navigation2 실행
+
+RViz를 통한 목표 지정 및 자율주행
+
+주요 문제 해결 방법(TF, localization 등)
+
+완전한 경로와 명령어 정리
+
+GitHub에 그대로 올릴 수 있게 마크다운 포맷 구성 완료
+
+📝 사용 방법
+파일 저장:
+
+bash
+복사
+편집
+nano setup_nav2.sh  # 또는 VSCode로 열기
+실행 권한 부여:
+
+bash
+복사
+편집
+chmod +x setup_nav2.sh
+실행:
+
+bash
+복사
+편집
+./setup_nav2.sh
+
