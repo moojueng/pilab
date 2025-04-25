@@ -89,7 +89,7 @@ ros2 run tf2_tools view_frames
 
 🚀 결과
 
-![image](https://github.com/user-attachments/assets/babc8acb-9fe9-47c4-b316-419f48e9fd3c)
+[스크린캐스트 04-25-2025 10:40:07 AM.webm](https://github.com/user-attachments/assets/5d2754d4-15a5-4159-91f0-c743714d1577)
 
 
 🌐 참고
