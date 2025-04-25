@@ -1,3 +1,6 @@
+
+![image](https://github.com/user-attachments/assets/08f4a51b-f135-44ff-8f7a-b194d4579b68)
+
 🛍 ROS2 Humble 기반 자유주회 로벌 설정 & 시행 정보 (TurtleBot3 + Nav2 + Cartographer)
 
 가상: Ubuntu 22.04 + ROS2 Humble + Gazebo Classic + RViz + TurtleBot3 + Navigation2 + Cartographer
