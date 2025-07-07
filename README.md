@@ -32,9 +32,7 @@
 
 아래 블록도를 프로젝트 루트에 `250707_블록도.png`로 추가한 뒤 삽입하세요:
 
-![시스템 아키텍처 블록도](![250707_block](https://github.com/user-attachments/assets/4de187f8-e9b9-459d-9c5c-6be69b086776)
-)
-블록도.png)
+![시스템 아키텍처 블록도](250707_블록도.png)
 
 설명:
 - **UI Controller**: 웹/앱에서 목적지 선택
