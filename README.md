@@ -1,70 +1,106 @@
-# ROS2 Humble 기반 자율주행 및 LLM 제어 프로젝트
+# 모바일 로봇 VLA 자율주행 시뮬레이션 프로젝트
 
-## 📌 프로젝트 개요
-
-이 저장소는 **ROS2 Humble**을 기반으로 한 모바일 로봇의 자율주행 구현과, **LLM (Large Language Model)**을 이용한 자연어 기반 로봇 제어 실험을 정리한 프로젝트입니다. 향후 **로봇 매니퓰레이터** 제어와의 통합을 목표로 하고 있습니다.
-
----
-
-## 📁 프로젝트 구성
-
-### 1. `ros2_humble_nav2`
-- **목적:** ROS2 Nav2 패키지를 활용하여 모바일 로봇의 자율주행 구현
-- **주요 기능:**
-  - SLAM을 통한 실시간 맵 생성
-  - 목표 위치(Point Goal) 기반 자동 경로 생성 및 추종
-  - 장애물 회피 및 costmap 기반의 동적 경로 재계산
-
-### 2. `ros2_humble_nav2_LLM_control`
-- **목적:** LLM을 이용한 자연어 기반 경로 지시 및 제어
-- **시스템 개요:**
-  - 사용자의 자연어 명령 → LLM 처리 → ROS2 명령어 변환
-  - ex) "거실로 이동해" → `/navigate_to_pose` 토픽 발행
-- **구현 방식:**
-  - OpenAI API 또는 Fine-tuned LLM + Python 인터페이스
-  - 텍스트 입력 또는 음성(STT) → 명령 추출 → ROS2 연동
+## 목차
+1. [개발 개요](#개발-개요)
+2. [개발 환경](#개발-환경)
+3. [시스템 아키텍처](#시스템-아키텍처)
+4. [통신 및 제어 흐름](#통신-및-제어-흐름)
+5. [일정 계획 (Gantt 차트)](#일정-계획-gantt-차트)
+6. [단계별 개발 계획](#단계별-개발-계획)
+7. [시뮬레이션 완료 목표](#시뮬레이션-완료-목표)
+8. [향후 계획](#향후-계획)
+9. [사용 툴 및 패키지](#사용-툴-및-패키지)
+10. [참고문헌 & 논문](#참고문헌--논문)
 
 ---
 
-## 🧠 향후 확장 계획
+## 개발 개요
 
-### 3. Manipulator 제어 시스템
-- **목표:** 모바일 베이스 + 매니퓰레이터 통합 지능형 로봇 시스템
-- **예정 기능:**
-  - 시뮬레이션 환경(Gazebo, Mujoco)에서 6-DOF 이상 매니퓰레이터 제어
-  - LLM + 비전 기반 작업 명령 수행 (ex: “책을 집어서 테이블 위에 올려줘”)
-  - DDPM 등 확률 기반 경로 생성 알고리즘과의 연계
+- **목적**: A6000 서버에서 VLA(ALOHA) 모델로 장애물을 감지하고, 내부 Wi-Fi를 통해 Pi 장치에 명령을 전달하여 실시간 경로 재탐색 구현
+- **기술 범위**: ROS2 Humble, Gazebo/RViz2, Flask, OpenCV, ALOHA
 
----
+## 개발 환경
 
-## 🔧 사용 환경
+| 구성 요소                 | 사양 / OS                   |
+| ------------------------- | --------------------------- |
+| **A6000 서버**           | Ubuntu 22.04 LTS, RTX 4080  |
+| **Raspberry Pi 4 (CCTV)** | Ubuntu 22.04 LTS           |
+| **Raspberry Pi 4 (TurtleBot)** | Ubuntu 22.04 LTS Server |
+| **네트워크**             | 내부 Wi-Fi (Flask 호스팅)   |
 
-- **OS:** Ubuntu 22.04
-- **ROS2:** Humble Hawksbill
-- **시뮬레이터:** Gazebo / Mujoco (선택)
-- **언어:** Python, C++
-- **LLM:** OpenAI GPT / KoAlpaca 등 활용 가능
+## 시스템 아키텍처
 
----
+아래 블록도를 프로젝트 루트에 `250707_블록도.png`로 추가한 뒤 삽입하세요:
 
-## 💡 연구 키워드
+![시스템 아키텍처 블록도](250707_블록도.png)
 
-`ROS2` `Nav2` `LLM Control` `지능형 로봇` `자율주행` `Manipulator` `Gazebo` `딥러닝 제어` `Multimodal Robotics`
+설명:
+- **UI Controller**: 웹/앱에서 목적지 선택
+- **Flask Server**: HTTP/REST API 및 Pi 간 메시지 중계
+- **A6000 Server**: ALOHA 모델 추론 및 연산
+- **CCTV Pi**: OpenCV + ALOHA 장애물 감지
+- **TurtleBot Pi**: ROS2 Nav2 자율 주행 및 재탐색
 
----
+## 통신 및 제어 흐름
 
-## 👨‍🔬 연구자 정보
+1. **UI → Flask**: 목적지 전송 (HTTP/REST)
+2. **Flask → TurtleBot Pi**: 주행 시작 (ROS2 토픽)
+3. **CCTV Pi → Flask**: 장애물 감지 이벤트 전송
+4. **Flask → TurtleBot Pi**: 경로 재탐색 명령 전송
+5. **TurtleBot Pi → Flask → UI**: 상태 보고
 
-- **소속:** 경북대학교 물·IT융합공학과
-- **연구실:** 이상문 교수님 지능형 로봇 연구실
-- **작성자:** 김무정 석사
+## 일정 계획 (Gantt 차트)
 
----
+| 작업 항목                           | 시작일       | 종료일       |
+| --------------------------------- | ------------ | ------------ |
+| 환경 구축 (ROS2 Humble 설치)       | 2025-07-01   | 2025-07-03   |
+| 시뮬레이션 환경 구축 (ROS2)         | 2025-07-04   | 2025-07-07   |
+| 통신 모듈 개발 (Flask API)          | 2025-07-08   | 2025-07-12   |
+| VLA 모델 로드 및 테스트            | 2025-07-13   | 2025-07-17   |
+| 장애물 감지 로직 구현 (CCTV)        | 2025-07-18   | 2025-07-21   |
+| 경로 재탐색 알고리즘 적용           | 2025-07-22   | 2025-07-26   |
+| 최종 통합 테스트 및 분석           | 2025-07-27   | 2025-07-31   |
 
-## 🔗 참고 자료
+## 단계별 개발 계획
 
-- [ROS2 Navigation2 공식 문서](https://navigation.ros.org/)
-- [OpenAI GPT API](https://platform.openai.com/docs/)
-- [Franka Control with ROS2](https://github.com/frankaemika/franka_ros2)
-- [Gazebo Simulation with ROS2](https://gazebosim.org/)
+1. **환경 구축**
+   - ROS2 Humble 설치 및 설정
+   - 네트워크 구성, 의존성 패키지 설치
+2. **Flask API 개발**
+   - 목적지 전송, 장애물 이벤트 엔드포인트 구현
+3. **VLA 모델 검증**
+   - ALOHA 모델 다운로드·연동, 추론 테스트
+4. **시뮬레이션 세팅**
+   - Gazebo/RViz2에서 로봇 및 장애물 배치
+5. **장애물 감지 로직**
+   - CCTV Pi에서 OpenCV + ALOHA로 감지 및 이벤트 전송
+6. **경로 재탐색**
+   - ROS2 Nav2 실시간 좌표 업데이트 (토픽 사용)
+7. **통합 테스트**
+   - 전체 플로우 시뮬레이션, 성능 지표 검증
 
+## 시뮬레이션 완료 목표
+
+- **정상 주행**: 지정 목적지까지 장애물 없이 주행
+- **장애물 대응**: 감지 후 5초 이내 재탐색 시작
+- **성능**: 응답 시간 < 200ms, 재탐색 성공률 ≥ 95%
+
+## 향후 계획
+
+- 실제 하드웨어 환경 검증 및 튜닝
+- 시뮬레이션 파라미터 최적화, 자동화 스크립트 추가
+
+## 사용 툴 및 패키지
+
+- ROS2 Humble, Nav2
+- Gazebo, RViz2
+- Python 3.8+
+- Flask 2.x
+- OpenCV 4.x, PyTorch/TensorFlow
+
+## 참고문헌 & 논문
+
+- Kim et al. “Visual-LiDAR Association for Autonomous Navigation”, IEEE RA-L, 2024.
+- Park et al. “ALOHA: A Visual-LiDAR Fusion Model”, ICRA 2023.
+
+**#ROS2 #VLA #AutonomousDriving #Gazebo #RViz #Flask #OpenCV #ALOHA**
