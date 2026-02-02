@@ -39,6 +39,7 @@ venv/
 ENV/
 env/
 volov5/
+yolov5_venv/
 .venv
 
 # PyCharm
