@@ -1,0 +1,106 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+*.manifest
+*.spec
+pip-log.txt
+pip-delete-this-directory.txt
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.nox/
+.hypothesis/
+*.mo
+*.pot
+
+# Virtual Environment
+venv/
+ENV/
+env/
+volov5/
+.venv
+
+# PyCharm
+.idea/
+
+# VS Code (user-specific settings)
+.vscode/settings.json.user
+
+# ROS2
+build/
+install/
+log/
+*.bag
+*.db3
+
+# Gazebo
+.gazebo/
+
+# Cartographer
+*.pbstream
+
+# YOLO
+runs/
+*.weights
+*.pt
+!best.pt
+wandb/
+*.cache
+
+# System
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+.directory
+
+# Logs
+*.log
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Compiled files
+*.o
+*.a
+*.out
+
+# CMake
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
+
+# Images/Videos (large files - configure based on your needs)
+# Uncomment if you don't want to track these
+# *.mp4
+# *.avi
+# *.mov
+# *.jpg
+# *.jpeg
+# *.png
+# *.gif

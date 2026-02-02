@@ -1,0 +1,123 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "ROS2: Source Environment",
+      "type": "shell",
+      "command": "source /opt/ros/humble/setup.bash && source ~/.bashrc",
+      "problemMatcher": []
+    },
+    {
+      "label": "ROS2: Build Workspace",
+      "type": "shell",
+      "command": "source /opt/ros/humble/setup.bash && colcon build --symlink-install",
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "ROS2: Clean Workspace",
+      "type": "shell",
+      "command": "rm -rf build install log",
+      "problemMatcher": []
+    },
+    {
+      "label": "TurtleBot3: Launch Gazebo World",
+      "type": "shell",
+      "command": "export TURTLEBOT3_MODEL=burger && source /opt/ros/humble/setup.bash && ros2 launch turtlebot3_gazebo turtlebot3_world.launch.py",
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      }
+    },
+    {
+      "label": "TurtleBot3: Launch Cartographer SLAM",
+      "type": "shell",
+      "command": "export TURTLEBOT3_MODEL=burger && source /opt/ros/humble/setup.bash && ros2 launch turtlebot3_cartographer cartographer.launch.py use_sim_time:=true",
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      }
+    },
+    {
+      "label": "TurtleBot3: Launch Navigation2",
+      "type": "shell",
+      "command": "export TURTLEBOT3_MODEL=burger && source /opt/ros/humble/setup.bash && ros2 launch turtlebot3_navigation2 navigation2.launch.py map:=${input:mapFile} use_sim_time:=true",
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      }
+    },
+    {
+      "label": "ROS2: Launch RViz2 (Nav2)",
+      "type": "shell",
+      "command": "source /opt/ros/humble/setup.bash && ros2 run rviz2 rviz2 -d /opt/ros/humble/share/nav2_bringup/rviz/nav2_default_view.rviz",
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      }
+    },
+    {
+      "label": "ROS2: Save Map",
+      "type": "shell",
+      "command": "source /opt/ros/humble/setup.bash && ros2 run nav2_map_server map_saver_cli -f ${input:mapOutputPath}",
+      "problemMatcher": []
+    },
+    {
+      "label": "YOLO: Train Model",
+      "type": "shell",
+      "command": "cd yolo_proj/yolov5 && source ../volov5/bin/activate && python train.py --img 640 --batch 16 --epochs 50 --data datasets/3class/data.yaml --weights yolov5s.pt --name gassib",
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      }
+    },
+    {
+      "label": "YOLO: Detect (Webcam)",
+      "type": "shell",
+      "command": "cd yolo_proj/yolov5 && source ../volov5/bin/activate && python detect.py --weights runs/train/gassib/weights/best.pt --source 0 --img 640 --data datasets/3class/data.yaml",
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      }
+    },
+    {
+      "label": "YOLO: Detect (Images)",
+      "type": "shell",
+      "command": "cd yolo_proj/yolov5 && source ../volov5/bin/activate && python detect.py --weights runs/train/gassib/weights/best.pt --source datasets/3class/valid/images --img 640 --data datasets/3class/data.yaml",
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      }
+    },
+    {
+      "label": "Python: Install Requirements (YOLO)",
+      "type": "shell",
+      "command": "cd yolo_proj && source volov5/bin/activate && pip install -r requirements.txt",
+      "problemMatcher": []
+    }
+  ],
+  "inputs": [
+    {
+      "id": "mapFile",
+      "type": "promptString",
+      "description": "Map YAML file path",
+      "default": "${workspaceFolder}/map/map.yaml"
+    },
+    {
+      "id": "mapOutputPath",
+      "type": "promptString",
+      "description": "Output path for saved map (without extension)",
+      "default": "${workspaceFolder}/map/map"
+    }
+  ]
+}

@@ -1,0 +1,87 @@
+{
+  // Python 설정
+  "python.defaultInterpreterPath": "${workspaceFolder}/yolo_proj/volov5/bin/python",
+  "python.analysis.extraPaths": [
+    "${workspaceFolder}/yolo_proj/yolov5",
+    "/opt/ros/humble/lib/python3.10/site-packages"
+  ],
+  "python.autoComplete.extraPaths": [
+    "${workspaceFolder}/yolo_proj/yolov5",
+    "/opt/ros/humble/lib/python3.10/site-packages"
+  ],
+  "python.linting.enabled": true,
+  "python.linting.pylintEnabled": false,
+  "python.linting.flake8Enabled": true,
+  "python.formatting.provider": "black",
+
+  // ROS2 설정
+  "ros.distro": "humble",
+  "ros.rosSetupScript": "/opt/ros/humble/setup.bash",
+
+  // C++ 설정 (ROS2 패키지용)
+  "C_Cpp.default.intelliSenseMode": "linux-gcc-x64",
+  "C_Cpp.default.compilerPath": "/usr/bin/g++",
+  "C_Cpp.default.cppStandard": "c++17",
+  "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
+
+  // 파일 탐색기에서 제외할 항목
+  "files.exclude": {
+    "**/__pycache__": true,
+    "**/*.pyc": true,
+    "**/.pytest_cache": true,
+    "**/build": true,
+    "**/install": true,
+    "**/log": true,
+    "**/.cache": true
+  },
+
+  // 검색에서 제외할 항목
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/build": true,
+    "**/install": true,
+    "**/log": true,
+    "**/.venv": true,
+    "**/venv": true,
+    "**/volov5": true
+  },
+
+  // 파일 연결 (syntax highlighting)
+  "files.associations": {
+    "*.launch": "xml",
+    "*.xacro": "xml",
+    "*.urdf": "xml",
+    "*.rviz": "yaml",
+    "*.yaml": "yaml",
+    "*.yml": "yaml"
+  },
+
+  // 저장 시 자동 포맷팅
+  "editor.formatOnSave": true,
+  "editor.rulers": [100],
+  
+  // Python 파일 저장 시 import 정리
+  "[python]": {
+    "editor.codeActionsOnSave": {
+      "source.organizeImports": "explicit"
+    },
+    "editor.tabSize": 4
+  },
+
+  // YAML 파일 설정
+  "[yaml]": {
+    "editor.insertSpaces": true,
+    "editor.tabSize": 2,
+    "editor.autoIndent": "advanced"
+  },
+
+  // 터미널 설정
+  "terminal.integrated.env.linux": {
+    "ROS_DOMAIN_ID": "0",
+    "TURTLEBOT3_MODEL": "burger",
+    "GAZEBO_MODEL_PATH": "${env:GAZEBO_MODEL_PATH}:${workspaceFolder}/models"
+  },
+
+  // Git 설정
+  "git.ignoreLimitWarning": true
+}

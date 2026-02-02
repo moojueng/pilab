@@ -1,0 +1,75 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Python: YOLO Train",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/yolo_proj/yolov5/train.py",
+      "console": "integratedTerminal",
+      "justMyCode": false,
+      "args": [
+        "--img", "640",
+        "--batch", "16",
+        "--epochs", "50",
+        "--data", "datasets/3class/data.yaml",
+        "--weights", "yolov5s.pt",
+        "--name", "gassib"
+      ],
+      "cwd": "${workspaceFolder}/yolo_proj/yolov5",
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}/yolo_proj/yolov5"
+      }
+    },
+    {
+      "name": "Python: YOLO Detect (Webcam)",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/yolo_proj/yolov5/detect.py",
+      "console": "integratedTerminal",
+      "justMyCode": false,
+      "args": [
+        "--weights", "runs/train/gassib/weights/best.pt",
+        "--source", "0",
+        "--img", "640",
+        "--data", "datasets/3class/data.yaml"
+      ],
+      "cwd": "${workspaceFolder}/yolo_proj/yolov5",
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}/yolo_proj/yolov5"
+      }
+    },
+    {
+      "name": "Python: YOLO Detect (Images)",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/yolo_proj/yolov5/detect.py",
+      "console": "integratedTerminal",
+      "justMyCode": false,
+      "args": [
+        "--weights", "runs/train/gassib/weights/best.pt",
+        "--source", "datasets/3class/valid/images",
+        "--img", "640",
+        "--data", "datasets/3class/data.yaml"
+      ],
+      "cwd": "${workspaceFolder}/yolo_proj/yolov5",
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}/yolo_proj/yolov5"
+      }
+    },
+    {
+      "name": "Python: Current File",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${file}",
+      "console": "integratedTerminal",
+      "justMyCode": false
+    },
+    {
+      "name": "ROS2: Launch File",
+      "type": "ros",
+      "request": "launch",
+      "target": "${file}"
+    }
+  ]
+}

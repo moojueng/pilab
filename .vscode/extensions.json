@@ -1,0 +1,35 @@
+{
+  "recommendations": [
+    // Python 개발
+    "ms-python.python",
+    "ms-python.vscode-pylance",
+    "ms-python.black-formatter",
+    
+    // ROS2 개발
+    "ms-iot.vscode-ros",
+    "DotJoshJohnson.xml",
+    "smilerobotics.urdf",
+    
+    // C++ 개발 (ROS2 패키지용)
+    "ms-vscode.cpptools",
+    "ms-vscode.cpptools-extension-pack",
+    "ms-vscode.cmake-tools",
+    "twxs.cmake",
+    
+    // YAML 및 설정 파일
+    "redhat.vscode-yaml",
+    
+    // Git
+    "eamodio.gitlens",
+    "mhutchie.git-graph",
+    
+    // 마크다운
+    "yzhang.markdown-all-in-one",
+    "DavidAnson.vscode-markdownlint",
+    
+    // 유틸리티
+    "streetsidesoftware.code-spell-checker",
+    "PKief.material-icon-theme",
+    "oderwat.indent-rainbow"
+  ]
+}
