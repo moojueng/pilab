@@ -1,0 +1,32 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>s_nav_core</name>
+  <version>0.0.1</version>
+  <description>SSM-based navigation core for 2D grid Gazebo experiments.</description>
+
+  <maintainer email="mj@example.com">mj</maintainer>
+  <license>Apache-2.0</license>
+
+  <buildtool_depend>ament_cmake</buildtool_depend>
+
+  <depend>rclcpp</depend>
+  <depend>std_msgs</depend>
+  <depend>geometry_msgs</depend>
+  <depend>sensor_msgs</depend>
+  <depend>nav_msgs</depend>
+  <depend>s_nav_msgs</depend>
+  <depend>cv_bridge</depend>
+
+  <exec_depend>gazebo_ros</exec_depend>
+  <exec_depend>robot_state_publisher</exec_depend>
+  <exec_depend>xacro</exec_depend>
+  <exec_depend>turtlebot3_gazebo</exec_depend>
+
+  <test_depend>ament_lint_auto</test_depend>
+  <test_depend>ament_lint_common</test_depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>
+

@@ -1,0 +1,135 @@
+<?xml version="1.0" ?>
+<sdf version="1.6">
+  <world name="small_house_world">
+    <include>
+      <uri>model://sun</uri>
+    </include>
+
+    <include>
+      <uri>model://ground_plane</uri>
+    </include>
+
+    <physics name="default_physics" type="ode">
+      <max_step_size>0.001</max_step_size>
+      <real_time_factor>1.0</real_time_factor>
+    </physics>
+
+    <model name="house_floor">
+      <static>true</static>
+      <pose>1.5 0 0 0 0 0</pose>
+      <link name="link">
+        <collision name="collision">
+          <geometry><box><size>9.5 7.2 0.08</size></box></geometry>
+        </collision>
+        <visual name="visual">
+          <geometry><box><size>9.5 7.2 0.08</size></box></geometry>
+          <material>
+            <ambient>0.72 0.70 0.66 1</ambient>
+            <diffuse>0.72 0.70 0.66 1</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- Outer walls: four walls with door openings near the robot start. -->
+    <model name="outer_wall_north">
+      <static>true</static>
+      <pose>1.5 3.6 0.75 0 0 0</pose>
+      <link name="link">
+        <collision name="collision"><geometry><box><size>9.5 0.18 1.5</size></box></geometry></collision>
+        <visual name="visual"><geometry><box><size>9.5 0.18 1.5</size></box></geometry><material><ambient>0.86 0.86 0.82 1</ambient><diffuse>0.86 0.86 0.82 1</diffuse></material></visual>
+      </link>
+    </model>
+    <model name="outer_wall_south_left">
+      <static>true</static>
+      <pose>-1.65 -3.6 0.75 0 0 0</pose>
+      <link name="link">
+        <collision name="collision"><geometry><box><size>3.2 0.18 1.5</size></box></geometry></collision>
+        <visual name="visual"><geometry><box><size>3.2 0.18 1.5</size></box></geometry><material><ambient>0.86 0.86 0.82 1</ambient><diffuse>0.86 0.86 0.82 1</diffuse></material></visual>
+      </link>
+    </model>
+    <model name="outer_wall_south_right">
+      <static>true</static>
+      <pose>4.75 -3.6 0.75 0 0 0</pose>
+      <link name="link">
+        <collision name="collision"><geometry><box><size>3.0 0.18 1.5</size></box></geometry></collision>
+        <visual name="visual"><geometry><box><size>3.0 0.18 1.5</size></box></geometry><material><ambient>0.86 0.86 0.82 1</ambient><diffuse>0.86 0.86 0.82 1</diffuse></material></visual>
+      </link>
+    </model>
+    <model name="outer_wall_west">
+      <static>true</static>
+      <pose>-3.25 0 0.75 0 0 0</pose>
+      <link name="link">
+        <collision name="collision"><geometry><box><size>0.18 7.2 1.5</size></box></geometry></collision>
+        <visual name="visual"><geometry><box><size>0.18 7.2 1.5</size></box></geometry><material><ambient>0.86 0.86 0.82 1</ambient><diffuse>0.86 0.86 0.82 1</diffuse></material></visual>
+      </link>
+    </model>
+    <model name="outer_wall_east">
+      <static>true</static>
+      <pose>6.25 0 0.75 0 0 0</pose>
+      <link name="link">
+        <collision name="collision"><geometry><box><size>0.18 7.2 1.5</size></box></geometry></collision>
+        <visual name="visual"><geometry><box><size>0.18 7.2 1.5</size></box></geometry><material><ambient>0.86 0.86 0.82 1</ambient><diffuse>0.86 0.86 0.82 1</diffuse></material></visual>
+      </link>
+    </model>
+
+    <!-- Interior layout: rooms and corridors. Semantic objects are limited to a red chair and a blue bed. -->
+    <model name="hall_wall_left">
+      <static>true</static>
+      <pose>-0.15 0.50 0.65 0 0 0</pose>
+      <link name="link">
+        <collision name="collision"><geometry><box><size>0.16 4.2 1.3</size></box></geometry></collision>
+        <visual name="visual"><geometry><box><size>0.16 4.2 1.3</size></box></geometry><material><ambient>0.78 0.79 0.76 1</ambient><diffuse>0.78 0.79 0.76 1</diffuse></material></visual>
+      </link>
+    </model>
+    <model name="hall_wall_right">
+      <static>true</static>
+      <pose>2.45 0.65 0.65 0 0 0</pose>
+      <link name="link">
+        <collision name="collision"><geometry><box><size>0.16 3.2 1.3</size></box></geometry></collision>
+        <visual name="visual"><geometry><box><size>0.16 3.2 1.3</size></box></geometry><material><ambient>0.78 0.79 0.76 1</ambient><diffuse>0.78 0.79 0.76 1</diffuse></material></visual>
+      </link>
+    </model>
+    <model name="north_room_wall">
+      <static>true</static>
+      <pose>4.45 1.05 0.65 0 0 1.5708</pose>
+      <link name="link">
+        <collision name="collision"><geometry><box><size>0.16 3.3 1.3</size></box></geometry></collision>
+        <visual name="visual"><geometry><box><size>0.16 3.3 1.3</size></box></geometry><material><ambient>0.78 0.79 0.76 1</ambient><diffuse>0.78 0.79 0.76 1</diffuse></material></visual>
+      </link>
+    </model>
+    <model name="south_room_wall">
+      <static>true</static>
+      <pose>4.45 -1.35 0.65 0 0 1.5708</pose>
+      <link name="link">
+        <collision name="collision"><geometry><box><size>0.16 3.3 1.3</size></box></geometry></collision>
+        <visual name="visual"><geometry><box><size>0.16 3.3 1.3</size></box></geometry><material><ambient>0.78 0.79 0.76 1</ambient><diffuse>0.78 0.79 0.76 1</diffuse></material></visual>
+      </link>
+    </model>
+
+    <!-- Living room object target: red chair. Current RGB detector treats red as target. -->
+    <model name="target_red_chair">
+      <static>true</static>
+      <pose>-2.1 2.35 0.25 0 0 0.25</pose>
+      <link name="seat">
+        <collision name="collision"><geometry><box><size>0.55 0.55 0.18</size></box></geometry></collision>
+        <visual name="visual"><geometry><box><size>0.55 0.55 0.18</size></box></geometry><material><ambient>0.9 0.02 0.01 1</ambient><diffuse>0.9 0.02 0.01 1</diffuse></material></visual>
+      </link>
+      <link name="back">
+        <pose>0 0.24 0.35 0 0 0</pose>
+        <collision name="collision"><geometry><box><size>0.55 0.08 0.7</size></box></geometry></collision>
+        <visual name="visual"><geometry><box><size>0.55 0.08 0.7</size></box></geometry><material><ambient>0.9 0.02 0.01 1</ambient><diffuse>0.9 0.02 0.01 1</diffuse></material></visual>
+      </link>
+    </model>
+
+    <model name="bed">
+      <static>true</static>
+      <pose>4.9 -2.55 0.25 0 0 0</pose>
+      <link name="link">
+        <collision name="collision"><geometry><box><size>1.5 1.1 0.35</size></box></geometry></collision>
+        <visual name="visual"><geometry><box><size>1.5 1.1 0.35</size></box></geometry><material><ambient>0.25 0.38 0.75 1</ambient><diffuse>0.25 0.38 0.75 1</diffuse></material></visual>
+      </link>
+    </model>
+
+  </world>
+</sdf>

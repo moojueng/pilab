@@ -1,0 +1,495 @@
+#include <algorithm>
+#include <array>
+#include <cmath>
+#include <fstream>
+#include <iostream>
+#include <map>
+#include <memory>
+#include <queue>
+#include <set>
+#include <sstream>
+#include <string>
+#include <tuple>
+#include <vector>
+
+#include "onnxruntime_cxx_api.h"
+
+struct Pos {
+    int r = 0;
+    int c = 0;
+
+    bool operator<(const Pos& o) const {
+        return std::tie(r, c) < std::tie(o.r, o.c);
+    }
+
+    bool operator==(const Pos& o) const {
+        return r == o.r && c == o.c;
+    }
+};
+
+struct Metrics {
+    bool success = false;
+    int steps = 0;
+    int collisions = 0;
+    int revisits = 0;
+    int observed_nodes = 0;
+    int observed_edges = 0;
+    int target_seen_step = -1;
+};
+
+class GridPolicy {
+public:
+    GridPolicy(const std::string& model_path)
+        : env_(ORT_LOGGING_LEVEL_WARNING, "grid_policy_eval"),
+          session_options_(),
+          session_(nullptr) {
+        session_options_.SetIntraOpNumThreads(1);
+        session_options_.SetGraphOptimizationLevel(GraphOptimizationLevel::ORT_ENABLE_EXTENDED);
+        session_ = std::make_unique<Ort::Session>(env_, model_path.c_str(), session_options_);
+        memory_info_ = Ort::MemoryInfo::CreateCpu(OrtArenaAllocator, OrtMemTypeDefault);
+        std::cout << "Loaded ONNX policy: " << model_path << std::endl;
+    }
+
+    int predictAction(const std::vector<float>& input) {
+        std::array<int64_t, 2> input_shape{1, static_cast<int64_t>(input.size())};
+
+        Ort::Value input_tensor = Ort::Value::CreateTensor<float>(
+            memory_info_,
+            const_cast<float*>(input.data()),
+            input.size(),
+            input_shape.data(),
+            input_shape.size());
+
+        const char* input_names[] = {"input"};
+        const char* output_names[] = {"action_logits", "reward_values"};
+
+        auto outputs = session_->Run(
+            Ort::RunOptions{nullptr},
+            input_names,
+            &input_tensor,
+            1,
+            output_names,
+            2);
+
+        float* action_logits = outputs[0].GetTensorMutableData<float>();
+        float* reward_values = outputs[1].GetTensorMutableData<float>();
+
+        int best_action = 0;
+        float best_score = -1e9f;
+
+        // reward head를 우선 사용하되, action logit도 약간 섞음
+        for (int a = 0; a < 5; ++a) {
+            float score = reward_values[a] + 0.2f * action_logits[a];
+            if (score > best_score) {
+                best_score = score;
+                best_action = a;
+            }
+        }
+
+        return best_action;
+    }
+
+private:
+    Ort::Env env_;
+    Ort::SessionOptions session_options_;
+    std::unique_ptr<Ort::Session> session_;
+    Ort::MemoryInfo memory_info_{nullptr};
+};
+
+class GridPolicyEval {
+public:
+    GridPolicyEval(const std::string& model_path)
+        : policy_(model_path) {}
+
+    bool loadHiddenMap(const std::string& path) {
+        hidden_map_.clear();
+
+        std::ifstream file(path);
+        if (!file.is_open()) {
+            std::cerr << "failed to open map: " << path << std::endl;
+            return false;
+        }
+
+        std::string line;
+        while (std::getline(file, line)) {
+            if (line.empty()) {
+                continue;
+            }
+
+            std::vector<int> row;
+            std::stringstream ss(line);
+            std::string cell;
+
+            while (std::getline(ss, cell, ',')) {
+                row.push_back(std::stoi(cell));
+            }
+
+            hidden_map_.push_back(row);
+        }
+
+        rows_ = static_cast<int>(hidden_map_.size());
+        cols_ = rows_ > 0 ? static_cast<int>(hidden_map_[0].size()) : 0;
+        observed_map_.assign(rows_, std::vector<int>(cols_, -1));
+
+        return rows_ > 0 && cols_ > 0;
+    }
+
+    Metrics run(Pos start, int max_steps, int vision_radius) {
+        robot_ = start;
+        max_steps_ = max_steps;
+        vision_radius_ = vision_radius;
+
+        trajectory_.clear();
+        visited_.clear();
+        node_id_.clear();
+        observed_edges_ = 0;
+
+        Metrics m;
+
+        if (!inBounds(robot_) || isObstacleHidden(robot_)) {
+            std::cerr << "invalid start" << std::endl;
+            m.collisions = 1;
+            return m;
+        }
+
+        int prev_action = 4;
+
+        for (int step = 0; step < max_steps_; ++step) {
+            observeLocalPatch();
+            buildObservedGraph();
+            trajectory_.push_back(robot_);
+
+            if (targetVisibleInLocalPatch()) {
+                m.success = true;
+                m.steps = step;
+                m.target_seen_step = step;
+                break;
+            }
+
+            std::vector<float> input = buildFeature(prev_action);
+            int action = policy_.predictAction(input);
+
+            Pos next = actionToNext(action);
+
+            if (action == 4) {
+                if (targetVisibleInLocalPatch()) {
+                    m.success = true;
+                    m.steps = step;
+                    m.target_seen_step = step;
+                    break;
+                }
+                action = fallbackAction();
+                next = actionToNext(action);
+            }
+
+            if (!move(next)) {
+                m.collisions++;
+                action = fallbackAction();
+                next = actionToNext(action);
+                move(next);
+            }
+
+            if (visited_.count(robot_) > 0) {
+                m.revisits++;
+            }
+
+            visited_.insert(robot_);
+            prev_action = action;
+        }
+
+        if (!m.success && m.steps == 0) {
+            m.steps = max_steps_;
+        }
+
+        m.observed_nodes = static_cast<int>(node_id_.size());
+        m.observed_edges = observed_edges_;
+
+        return m;
+    }
+
+    void saveTrajectory(const std::string& path) const {
+        std::ofstream f(path);
+        f << "step,r,c\n";
+        for (size_t i = 0; i < trajectory_.size(); ++i) {
+            f << i << "," << trajectory_[i].r << "," << trajectory_[i].c << "\n";
+        }
+    }
+
+    void saveObservedMapCsv(const std::string& path) const {
+        std::ofstream f(path);
+        for (int r = 0; r < rows_; ++r) {
+            for (int c = 0; c < cols_; ++c) {
+                if (c > 0) {
+                    f << ",";
+                }
+                f << observed_map_[r][c];
+            }
+            f << "\n";
+        }
+    }
+
+    void saveImagePpm(const std::string& path) const {
+        const int scale = 50;
+        const int w = cols_ * scale;
+        const int h = rows_ * scale;
+        std::vector<unsigned char> img(w * h * 3, 255);
+
+        auto paint = [&](int r, int c, int R, int G, int B) {
+            for (int y = r * scale; y < (r + 1) * scale; ++y) {
+                for (int x = c * scale; x < (c + 1) * scale; ++x) {
+                    int idx = (y * w + x) * 3;
+                    bool grid_line = (x % scale < 2) || (y % scale < 2);
+                    img[idx + 0] = static_cast<unsigned char>(grid_line ? 120 : R);
+                    img[idx + 1] = static_cast<unsigned char>(grid_line ? 120 : G);
+                    img[idx + 2] = static_cast<unsigned char>(grid_line ? 120 : B);
+                }
+            }
+        };
+
+        for (int r = 0; r < rows_; ++r) {
+            for (int c = 0; c < cols_; ++c) {
+                int v = observed_map_[r][c];
+
+                if (v == -1) {
+                    paint(r, c, 170, 170, 170);
+                } else if (v == 1) {
+                    paint(r, c, 0, 0, 0);
+                } else if (v == 2) {
+                    paint(r, c, 255, 0, 0);
+                } else {
+                    paint(r, c, 255, 255, 255);
+                }
+            }
+        }
+
+        if (!trajectory_.empty()) {
+            paint(trajectory_.front().r, trajectory_.front().c, 180, 0, 255);
+        }
+
+        for (const Pos& p : visited_) {
+            paint(p.r, p.c, 110, 180, 255);
+        }
+
+        for (const Pos& p : trajectory_) {
+            paint(p.r, p.c, 255, 220, 0);
+        }
+
+        paint(robot_.r, robot_.c, 0, 255, 0);
+
+        std::ofstream f(path, std::ios::binary);
+        f << "P6\n" << w << " " << h << "\n255\n";
+        f.write(reinterpret_cast<const char*>(img.data()), img.size());
+    }
+
+private:
+    bool inBounds(Pos p) const {
+        return p.r >= 0 && p.r < rows_ && p.c >= 0 && p.c < cols_;
+    }
+
+    bool isObstacleHidden(Pos p) const {
+        return !inBounds(p) || hidden_map_[p.r][p.c] == 1;
+    }
+
+    bool isFreeObserved(Pos p) const {
+        return inBounds(p) && (observed_map_[p.r][p.c] == 0 || observed_map_[p.r][p.c] == 2);
+    }
+
+    std::vector<Pos> neighbors4(Pos p) const {
+        return {
+            Pos{p.r - 1, p.c},
+            Pos{p.r, p.c + 1},
+            Pos{p.r + 1, p.c},
+            Pos{p.r, p.c - 1}
+        };
+    }
+
+    void observeLocalPatch() {
+        for (int dr = -vision_radius_; dr <= vision_radius_; ++dr) {
+            for (int dc = -vision_radius_; dc <= vision_radius_; ++dc) {
+                Pos p{robot_.r + dr, robot_.c + dc};
+                if (inBounds(p)) {
+                    observed_map_[p.r][p.c] = hidden_map_[p.r][p.c];
+                }
+            }
+        }
+    }
+
+    bool targetVisibleInLocalPatch() const {
+        for (int dr = -vision_radius_; dr <= vision_radius_; ++dr) {
+            for (int dc = -vision_radius_; dc <= vision_radius_; ++dc) {
+                Pos p{robot_.r + dr, robot_.c + dc};
+                if (inBounds(p) && observed_map_[p.r][p.c] == 2) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    void buildObservedGraph() {
+        node_id_.clear();
+        observed_edges_ = 0;
+
+        int id = 0;
+        for (int r = 0; r < rows_; ++r) {
+            for (int c = 0; c < cols_; ++c) {
+                Pos p{r, c};
+                if (isFreeObserved(p)) {
+                    node_id_[p] = id++;
+                }
+            }
+        }
+
+        for (const auto& kv : node_id_) {
+            Pos p = kv.first;
+            for (Pos n : neighbors4(p)) {
+                if (node_id_.count(n) > 0) {
+                    observed_edges_++;
+                }
+            }
+        }
+    }
+
+    std::vector<float> buildFeature(int prev_action) const {
+        std::vector<float> x;
+        x.reserve(32);
+
+        for (int dr = -2; dr <= 2; ++dr) {
+            for (int dc = -2; dc <= 2; ++dc) {
+                Pos p{robot_.r + dr, robot_.c + dc};
+                if (!inBounds(p)) {
+                    x.push_back(-1.0f);
+                } else {
+                    x.push_back(static_cast<float>(observed_map_[p.r][p.c]));
+                }
+            }
+        }
+
+        int frontier_count = 0;
+        for (const auto& kv : node_id_) {
+            Pos p = kv.first;
+            for (Pos n : neighbors4(p)) {
+                if (inBounds(n) && observed_map_[n.r][n.c] == -1) {
+                    frontier_count++;
+                }
+            }
+        }
+
+        x.push_back(static_cast<float>(robot_.r));
+        x.push_back(static_cast<float>(robot_.c));
+        x.push_back(static_cast<float>(prev_action));
+        x.push_back(static_cast<float>(node_id_.size()));
+        x.push_back(static_cast<float>(observed_edges_));
+        x.push_back(static_cast<float>(frontier_count));
+        x.push_back(static_cast<float>(visited_.size()));
+
+        return x;
+    }
+
+    Pos actionToNext(int action) const {
+        if (action == 0) {
+            return Pos{robot_.r - 1, robot_.c};
+        }
+        if (action == 1) {
+            return Pos{robot_.r, robot_.c + 1};
+        }
+        if (action == 2) {
+            return Pos{robot_.r + 1, robot_.c};
+        }
+        if (action == 3) {
+            return Pos{robot_.r, robot_.c - 1};
+        }
+        return robot_;
+    }
+
+    int fallbackAction() const {
+        for (int a = 0; a < 4; ++a) {
+            Pos n = actionToNext(a);
+            if (isFreeObserved(n) && visited_.count(n) == 0) {
+                return a;
+            }
+        }
+
+        for (int a = 0; a < 4; ++a) {
+            Pos n = actionToNext(a);
+            if (isFreeObserved(n)) {
+                return a;
+            }
+        }
+
+        return 4;
+    }
+
+    bool move(Pos next) {
+        if (isObstacleHidden(next)) {
+            return false;
+        }
+        robot_ = next;
+        return true;
+    }
+
+    GridPolicy policy_;
+
+    std::vector<std::vector<int>> hidden_map_;
+    std::vector<std::vector<int>> observed_map_;
+
+    int rows_ = 0;
+    int cols_ = 0;
+    int max_steps_ = 200;
+    int vision_radius_ = 2;
+
+    Pos robot_;
+    std::set<Pos> visited_;
+    std::vector<Pos> trajectory_;
+
+    std::map<Pos, int> node_id_;
+    int observed_edges_ = 0;
+};
+
+int main(int argc, char** argv) {
+    std::string map_path = "maps/grid_unseen/unseen_001.csv";
+    std::string model_path = "models/grid_ssm_policy.onnx";
+
+    if (argc > 1) {
+        map_path = argv[1];
+    }
+    if (argc > 2) {
+        model_path = argv[2];
+    }
+
+    GridPolicyEval eval(model_path);
+
+    if (!eval.loadHiddenMap(map_path)) {
+        return 1;
+    }
+
+    Metrics m = eval.run(Pos{7, 0}, 200, 2);
+
+    std::string out_dir = "results/grid_sim";
+    eval.saveTrajectory(out_dir + "/policy_trajectory.csv");
+    eval.saveObservedMapCsv(out_dir + "/policy_observed_map.csv");
+    eval.saveImagePpm(out_dir + "/policy_path.ppm");
+
+    std::ofstream metrics(out_dir + "/policy_metrics.csv");
+    metrics << "success,steps,collisions,revisits,observed_nodes,observed_edges,target_seen_step\n";
+    metrics << m.success << ","
+            << m.steps << ","
+            << m.collisions << ","
+            << m.revisits << ","
+            << m.observed_nodes << ","
+            << m.observed_edges << ","
+            << m.target_seen_step << "\n";
+
+    std::cout << "Grid policy eval finished.\n";
+    std::cout << "No A*, no goal coordinate, policy-only runtime.\n";
+    std::cout << "success=" << m.success
+              << " steps=" << m.steps
+              << " collisions=" << m.collisions
+              << " revisits=" << m.revisits
+              << " observed_nodes=" << m.observed_nodes
+              << " observed_edges=" << m.observed_edges
+              << " target_seen_step=" << m.target_seen_step
+              << std::endl;
+
+    return 0;
+}

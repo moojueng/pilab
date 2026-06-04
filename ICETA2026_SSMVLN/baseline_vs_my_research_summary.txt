@@ -1,0 +1,120 @@
+Baseline(ETPNav) vs My Research Summary
+작성일: 2026-05-20
+
+1. 한 줄 요약
+
+ETPNav는 "자연어 목표를 찾아가는 online topological VLN"이고, 내 연구는
+"미지공간을 넓히며 목표를 발견하는 lightweight voxel-frontier exploration"이다.
+
+
+2. 공통점
+
+- 둘 다 테스트 환경의 사전 지도(full map)를 미리 갖고 시작하지 않는다.
+- 둘 다 로봇이 이동하면서 현재 관측을 누적해 online graph/map을 만든다.
+- 둘 다 자연어 목표 또는 object goal을 사용해 navigation/exploration을 수행한다.
+- 둘 다 cloud API 기반 LLM이 핵심인 구조는 아니다. 로컬에서 추론 가능한 모델 구조로 볼 수 있다.
+
+
+3. 핵심 차이점
+
+| 항목 | ETPNav baseline | 내 연구 방향 |
+| --- | --- | --- |
+| 목적 | 자연어 instruction goal까지 이동하는 goal-directed VLN | 미지공간을 탐색하다가 목표가 보이면 인지하는 exploration-first navigation |
+| 온라인 지도 | online topological map | online voxel-frontier graph |
+| node 의미 | viewpoint, waypoint, visited node, ghost node | 관측된 free voxel, obstacle voxel, frontier 후보 |
+| 다음 이동 기준 | instruction과 관련 있어 보이는 node/waypoint 선택 | 미관측 공간을 많이 열 수 있는 frontier 선택 |
+| 핵심 질문 | "목표로 가려면 어디로 가야 하는가?" | "어디로 가야 아직 안 본 공간을 더 많이 볼 수 있는가?" |
+| 모델 | Transformer 기반 VLN/cross-modal planner | 경량 local VLN/object-goal parser + SSM-style policy |
+| 학습 의존성 | VLN benchmark 기반 pre-training/fine-tuning 의존도가 큼 | 사전학습된 경량 모델은 쓰되, 새 환경마다 fine-tuning하지 않고 online graph와 policy로 탐색하는 방향 |
+| 온보드성 | Jetson급 소형 장비에는 무거울 가능성이 큼 | Jetson Orin급 온보드 실시간 구동을 목표로 한 경량 구조 |
+
+
+4. Online topological map과 voxel-frontier graph의 쉬운 차이
+
+둘 다 "온라인 지도"이지만 목적과 표현이 다르다.
+
+ETPNav의 online topological map:
+- 로봇이 지나가며 본 장소/viewpoint를 node로 저장한다.
+- node 사이를 edge로 연결해 장소 기억 지도를 만든다.
+- 학습된 VLN Transformer가 자연어 instruction과 현재/과거 node feature를 보고
+  목표와 관련 있어 보이는 node를 고른다.
+- 즉, "목표가 있을 법한 장소 node를 고르는 지도"에 가깝다.
+
+내 연구의 online voxel-frontier graph:
+- RGB-D 관측으로 본 free/obstacle/target voxel을 online으로 누적한다.
+- 이미 본 공간과 아직 모르는 공간의 경계(frontier)를 후보로 만든다.
+- frontier마다 unknown gain, 이동 거리, 재방문 penalty 등을 계산해 다음 탐색 후보를 고른다.
+- 즉, "아직 안 본 공간을 더 넓히기 위한 탐색 후보 지도"에 가깝다.
+
+
+5. Local VLN/object-goal parser의 의미
+
+내 연구에서 local VLN은 경로계획 전체를 대신하지 않는다.
+
+역할:
+- 자연어 명령에서 목표 객체, 속성, 행동을 추출한다.
+  예: "빨간 의자를 찾으면 로그 남겨" -> object=chair, color=red, action=log
+- 탐색 중 카메라/RGB-D 관측에서 발견한 물체가 명령의 목표와 맞는지 확인한다.
+
+경로계획 역할은 frontier graph와 SSM-style policy가 담당한다.
+
+역할 분담:
+- local VLN/object-goal parser: "무엇을 찾아야 하는가?", "지금 본 것이 목표인가?"
+- RGB-D mapper: "현재 본 공간을 voxel graph로 어떻게 갱신하는가?"
+- frontier planner: "어디를 보면 모르는 공간이 더 열리는가?"
+- SSM-style policy: "graph/history feature를 가볍게 처리해 다음 frontier/action을 어떻게 고를 것인가?"
+
+
+6. SSM-style policy를 쓰는 이유
+
+ETPNav baseline은 Transformer 기반 planner를 사용한다. Transformer는 cross-modal reasoning에 강하지만
+history/graph가 커질수록 attention 계산 부담이 커질 수 있다.
+
+내 연구는 SSM/Mamba 계열의 정책을 사용해 sequence/history 정보를 hidden state 형태로 가볍게 갱신하고,
+online voxel-frontier graph와 결합해 온보드 실시간 탐색에 더 적합한 구조를 목표로 한다.
+
+정확한 기억 구조:
+- 장기 공간 기억: online voxel-frontier graph
+- 순차 정책 기억: SSM hidden/state feature
+- 목표 의미 기억: local VLN/object-goal parser가 해석한 target specification
+
+
+7. 학습 관련 정리
+
+ETPNav:
+- VLN benchmark 데이터 기반 pre-training/fine-tuning을 사용한다.
+- 새로운 episode마다 다시 학습하는 것은 아니지만, benchmark 분포와 다른 실제 비정형 환경에서는 domain gap이 생길 수 있다.
+
+내 연구:
+- 경량 local VLN/object model은 사전학습 weight를 사용할 수 있다.
+- 하지만 새 환경마다 VLN benchmark 방식으로 다시 fine-tuning하지 않고,
+  RGB-D online graph와 frontier/SSM policy로 실시간 탐색하는 방향이다.
+- 강화학습 이야기는 비교표에서 제외하는 것이 안전하다.
+
+
+8. 현재 구현에서 검증된 범위
+
+현재 데모에서 검증된 것은 다음이다.
+
+- 사전 지도 없이 RGB-D ray observation으로 observed voxel map을 만든다.
+- observed voxel을 graph로 연결하고 frontier 후보를 만든다.
+- utility policy 또는 SSM-style policy + fallback으로 다음 이동을 선택한다.
+- 목표 voxel이 실제 목표 좌표에 도착하지 않아도 RGB-D 시야에 들어오면 target_seen_step으로 성공을 기록한다.
+- HTML 3D viewer에서 obstacle, observed voxel, trajectory, target sight line을 확인할 수 있다.
+
+아직 최종 완성 전인 부분:
+- 실제 vision-language object classifier/local VLN 모델을 Gazebo camera stream에 완전히 붙이는 것.
+- Jetson Orin에서 latency, memory, FPS를 실제로 측정하는 것.
+- ETPNav와 같은 benchmark에서 SR/SPL을 직접 비교하는 것.
+
+
+9. 교수님께 말할 안전한 최종 문장
+
+ETPNav는 사전 지도 없이 online topological map을 만들고, Transformer 기반 VLN planner로
+자연어 목표까지 이동하는 goal-directed navigation 연구입니다.
+제 연구는 이 online graph navigation 개념을 목표 도달 중심이 아니라 미지공간 탐색 중심으로 재구성합니다.
+RGB-D 관측으로 online voxel-frontier graph를 만들고, 미관측 공간을 넓히는 frontier 후보를 선택하며,
+목표가 시야에 들어오면 local VLN/object-goal parser로 확인하는 구조입니다.
+또한 Transformer 기반 무거운 planner 대신 경량 local VLN과 SSM-style policy를 사용해
+데이터 의존도와 모델 연산량을 줄이고 Jetson Orin급 온보드 실시간 탐색을 목표로 합니다.
+
