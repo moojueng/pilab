@@ -1,0 +1,2 @@
+mode,target_name,target_value,success,steps,collisions,revisits,revisit_ratio,unique_visited,observed_nodes,observed_edges,target_seen_step,fallback_count,frontier_switches,visible_voxel_hits,depth_rays,avg_frontier_count,max_frontier_count,elapsed_wall_sec,avg_step_wall_ms,avg_decision_wall_ms,max_decision_wall_ms
+ssm_utility,red_chair,2,1,18,0,0,0.0,18,355,1388,18,0,13,8804,2850,70.6842105263158,98,0.5997250539949164,31.564019724579627,31.460129106158597,60.82992593292147

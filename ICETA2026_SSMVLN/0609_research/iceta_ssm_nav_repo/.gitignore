@@ -1,0 +1,34 @@
+# Build / install artifacts
+build/
+install/
+log/
+logs/
+__pycache__/
+scripts/__pycache__/
+*.pyc
+
+# Local debug dumps
+debug_*.txt
+graph_dump.csv
+
+# Generated datasets, maps, models, and results
+# Keep these out of GitHub by default. Upload only a small release package
+# or provide a download link when a paper artifact needs exact reproduction.
+datasets/
+maps/
+models/
+results/
+
+# Large local archives and generated media
+*.zip
+*.tar
+*.tar.gz
+*.pt
+*.onnx
+*.png
+*.mp4
+*.avi
+
+# Office temporary files
+~$*.docx
+*.tmp

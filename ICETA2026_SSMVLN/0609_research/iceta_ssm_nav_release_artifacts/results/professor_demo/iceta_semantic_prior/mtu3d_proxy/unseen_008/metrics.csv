@@ -1,0 +1,2 @@
+mode,target_name,target_value,success,steps,collisions,revisits,revisit_ratio,unique_visited,observed_nodes,observed_edges,target_seen_step,fallback_count,frontier_switches,visible_voxel_hits,depth_rays,avg_frontier_count,max_frontier_count,elapsed_wall_sec,avg_step_wall_ms,avg_decision_wall_ms,max_decision_wall_ms
+mtu3d_proxy,red_chair,2,1,23,0,2,0.08695652173913043,21,488,1972,23,0,13,13529,3600,88.20833333333333,130,1.2824649800313637,53.43570015975274,53.43728426479451,90.22144100163132

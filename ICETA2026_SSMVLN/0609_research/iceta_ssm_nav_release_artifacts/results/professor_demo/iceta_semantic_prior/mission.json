@@ -1,0 +1,13 @@
+{
+  "raw_command": "if you find a red chair while exploring the unknown house, leave a log",
+  "grounding_type": "offline_symbolic_fallback",
+  "llm_used": false,
+  "target_color": "red",
+  "target_object": "chair",
+  "target_name": "red_chair",
+  "mission": "exploration_first_target_discovery",
+  "mission_mode": "coverage_patrol",
+  "on_detection_action": "log",
+  "confidence": 0.62,
+  "reason": "Keyword fallback used because a local LLM response was unavailable."
+}

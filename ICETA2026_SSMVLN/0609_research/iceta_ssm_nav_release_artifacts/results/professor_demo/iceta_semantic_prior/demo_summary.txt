@@ -1,0 +1,25 @@
+Local LLM/VLN + RGB-D Voxel-Frontier + SSM Frontier Policy Demo
+
+command: if you find a red chair while exploring the unknown house, leave a log
+command grounding: offline_symbolic_fallback (llm_used=False, confidence=0.62)
+target spec: target=red_chair, action=log
+
+What this demo validates:
+- no prebuilt map is loaded by the online explorer
+- a natural-language command is grounded into a target/object-goal spec before exploration
+- RGB-D ray observation updates an online observed voxel graph
+- frontier candidates are selected to expand unknown space
+- ssm_utility mode uses a one-time-trained target-conditioned SSM-style scorer over explicit frontier-graph candidates
+- hybrid_ssm mode is kept as an ablation that re-ranks MTU3D-style proxy candidates with the SSM scorer
+- success means the target entered RGB-D observation, not that the robot physically arrived at the target voxel
+
+Aggregate:
+- mtu3d_proxy: success_rate=0.917, avg_steps_success=38.27, avg_revisit_ratio=0.1763, avg_fallback_count=0.00, avg_decision_ms=54.575, avg_frontiers=80.07
+- ssm_utility: success_rate=1.000, avg_steps_success=22.08, avg_revisit_ratio=0.0139, avg_fallback_count=0.00, avg_decision_ms=42.389, avg_frontiers=79.94
+- hybrid_ssm: success_rate=1.000, avg_steps_success=33.67, avg_revisit_ratio=0.0770, avg_fallback_count=0.00, avg_decision_ms=97.190, avg_frontiers=80.01
+
+viewer: results/professor_demo/iceta_semantic_prior/ssm_utility/unseen_001/rgbd_ssm_frontier_view.html
+
+Honest scope:
+- This is a demo validation for the proposed architecture direction.
+- A real local VLM/VLN object verifier and Jetson Orin timing measurement are still next-step work.
