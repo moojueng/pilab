@@ -1,8 +1,8 @@
 # VLN-Based Unknown and Unstructured Environment Exploration with Unitree Go2
 
-> **Master's thesis project**  
-> Kyungpook National University, Department of Water & IT Convergence Engineering  
-> Physical Intelligence Laboratory (PILAB), Advisor: Prof. Sangmoon Lee
+> **석사학위 연구 프로젝트 — 김무정**  
+> 경북대학교 물·IT융합공학과  
+> Physical Intelligence Laboratory (PILAB), 지도교수: 이상문 교수
 
 ## 1. Project Overview
 
@@ -194,6 +194,7 @@ This repository is under active development for a master's thesis project. Sourc
 
 ---
 
-**Researcher:** Moojueng Kim  
-**Laboratory:** Physical Intelligence Laboratory (PILAB)  
-**Institution:** Kyungpook National University
+**연구자:** 김무정 (석사과정)  
+**소속:** 경북대학교 물·IT융합공학과  
+**연구실:** Physical Intelligence Laboratory (PILAB)  
+**지도교수:** 이상문 교수
